@@ -1,0 +1,43 @@
+{
+    "apiVersion": "vlabs",
+    "location": "",
+    "properties": {
+        "orchestratorProfile": {
+            "orchestratorType": "Kubernetes",
+            "orchestratorRelease": "1.17",
+            "kubernetesConfig": {
+                "networkPolicy": "none",
+                "cloudProviderRateLimitQPS": 6,
+                "cloudProviderRateLimitBucket": 20,
+                "controllerManagerConfig": {
+                    "--feature-gates": "CSIInlineVolume=true,LocalStorageCapacityIsolation=true,ServiceNodeExclusion=true"
+                },
+                "cloudControllerManagerConfig": {
+                    "--feature-gates": "ServiceLoadBalancerFinalizer=true"
+                },
+                "apiServerConfig": {
+                    "--enable-admission-plugins": "NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,AlwaysPullImages"
+                }
+            }
+        },
+        "masterProfile": {
+            "count": 1,
+            "dnsPrefix": "{DNS_PREFIX}",
+            "vmSize": "Standard_DS2_v2"
+        },
+        "linuxProfile": {
+            "adminUsername": "azureuser",
+            "ssh": {
+                "publicKeys": [
+                    {
+                        "keyData": "{SSH_PUBLIC_KEY}"
+                    }
+                ]
+            }
+        },
+        "servicePrincipalProfile": {
+            "clientID": "{AZURE_CLIENT_ID}",
+            "secret": "{AZURE_CLIENT_SECRET}"
+        }
+    }
+}
