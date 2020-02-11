@@ -112,17 +112,11 @@ We need to copy certificate and key of ETCD to kubemark master. It will be used 
 scp _output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt _output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key azureuser@${KUBEMARK_MASTER_IP}:~/
 ```
 
-Since the clusterloader2 is designed for GCE, we need to change the code a bit to have it run on Azure. See [the PR](https://github.com/kubernetes/perf-tests/pull/1039#issuecomment-584021587) for the detailed change.
+Run the test suites:
 
 ```bash
-git clone https://github.com/nilo19/perf-tests.git
-cd perf-tests/
-git checkout add-curl-https-config
-```
-
-Run the test suites through:
-
-```bash
+git clone https://github.com/kubernetes/perf-tests.git
+cd perf-tests/clusterloader2
 cd clusterloader2/
 ./run-e2e.sh
     --kubeconfig=$KUBE_CONFIG \
