@@ -98,6 +98,24 @@ Delete all the pod / hollow nodes on external / kubemark cluster and do once aga
 kubectl taint node ${KUBEMARK_MASTER_NAME} node-role.kubernetes.io/master=:NoSchedule
 ```
 
+Finally, we need to disable the `kube-proxy` daemonsets on all hollow nodes because the kubemark has created that for us. As the master and the hollow nodes use one `kube-proxy.yaml`, we need to add a pod affinity to disable that on hollow nodes only (and remain kube-proxy on master intact).
+
+```bash
+vim /etc/kubernetes/addons/kube-proxy-daemonset.yaml
+
+...
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: failure-domain.beta.kubernetes.io/zone
+          operator: Exists
+
+kubectl apply -f /etc/kubernetes/addons/kube-proxy-daemonset.yaml
+```
+
 ## Run the performance tests
 
 We use [kubernetes/perf-tests/clusterloader2](https://github.com/kubernetes/perf-tests/clusterloader2) to run the performance tests on kubemark cluster. First of all we need to set up the test environment.
@@ -124,8 +142,15 @@ cd clusterloader2/
     --provider=$PROVIDER \
     --masterip=$MASTER_SSH_IP \
     --master-internal-ip=$MASTER_INTERNAL_IP \
-    --mastername=k8s-master-13504130-0 \
+    --mastername=$KUBEMARK_MASTER_NAME \
     --testconfig=$TEST_CONFIG \
     --report-dir=$REPORT_DIR \
     --alsologtostderr 2>&1 | tee $LOG_FILE
 ```
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: failure-domain.beta.kubernetes.io/zone
+                operator: Exists

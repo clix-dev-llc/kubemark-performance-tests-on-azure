@@ -10,13 +10,15 @@
                 "cloudProviderRateLimitQPS": 6,
                 "cloudProviderRateLimitBucket": 20,
                 "controllerManagerConfig": {
-                    "--feature-gates": "CSIInlineVolume=true,LocalStorageCapacityIsolation=true,ServiceNodeExclusion=true"
-                },
-                "cloudControllerManagerConfig": {
-                    "--feature-gates": "ServiceLoadBalancerFinalizer=true"
+                    "--feature-gates": "CSIInlineVolume=true,LocalStorageCapacityIsolation=true,ServiceNodeExclusion=true",
+                    "--profiling": "true"
                 },
                 "apiServerConfig": {
-                    "--enable-admission-plugins": "NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,AlwaysPullImages"
+                    "--enable-admission-plugins": "NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota,AlwaysPullImages",
+                    "--profiling": "true"
+                },
+                "schedulerConfig": {
+                    "--profiling": "true"
                 }
             }
         },
