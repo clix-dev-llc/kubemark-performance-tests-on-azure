@@ -4,6 +4,12 @@ This repo shows how to run k8s performance tests with kubemark cluster on Azure.
 
 Kubemark could be enabled on GCE using kubernetes official [automation scripts](https://github.com/kubernetes/kubernetes/tree/master/test/kubemark). However, it's hard to build kubemark cluster on other cloud providers or local environment. Although the [kubemark doc](https://github.com/kubernetes/community/blob/master/contributors/devel/sig-scalability/kubemark-guide.md) shows it is possible to start up kubemark in existed cluster and there's support in the codebase, there are still many bugs in the automation scripts when building outside of GCE. Here I would show you the detailed steps to run scalability tests on Azure kubemark cluster.
 
+## TL;DR
+
+```shell
+make run
+```
+
 ## Prerequisites
 
 You need to have a active Azure subscription to do the following steps.
@@ -121,7 +127,7 @@ kubectl apply -f /etc/kubernetes/addons/kube-proxy-daemonset.yaml
 We use [kubernetes/perf-tests/clusterloader2](https://github.com/kubernetes/perf-tests/clusterloader2) to run the performance tests on kubemark cluster. First of all we need to set up the test environment.
 
 ```bash
-source test-env.sh
+source scripts/test-env.sh
 ```
 
 We need to copy certificate and key of ETCD to kubemark master. It will be used in the test.
@@ -147,10 +153,3 @@ cd clusterloader2/
     --report-dir=$REPORT_DIR \
     --alsologtostderr 2>&1 | tee $LOG_FILE
 ```
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: failure-domain.beta.kubernetes.io/zone
-                operator: Exists
