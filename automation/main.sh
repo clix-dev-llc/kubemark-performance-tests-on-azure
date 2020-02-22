@@ -128,7 +128,7 @@ TEST_CONFIG="${TEST_CONFIG:-${ROOT_DIR}/testing/density/config.yaml}"
 REPORT_DIR="${ROOT_DIR}/reports"
 LOG_FILE="${ROOT_DIR}/log"
 
-CLUSTERLOADER2="${ROOT_DIR}/bin/clusterloader"
+CLUSTERLOADER2="${ROOT_DIR}/bin/clusterloader-$(uname -s)"
 
 ${CLUSTERLOADER2} \
     --kubeconfig="${KUBE_CONFIG}" \
