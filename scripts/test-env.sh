@@ -7,13 +7,13 @@ PROVIDER='kubemark'
 
 # SSH config for metrics' collection
 export KUBE_SSH_KEY_PATH=${SSH_PRIVATE_KEY}
-export KUBE_SSH_USER=azureuser
+export KUBE_SSH_USER=kubernetes
 MASTER_SSH_IP=${KUBEMARK_MASTER_IP}
 MASTER_NAME=${KUBEMARK_MASTER_NAME}
 
 # etcd https params
-export ETCD_CERTIFICATE=/home/azureuser/etcdclient.crt
-export ETCD_KEY=/home/azureuser/etcdclient.key
+export ETCD_CERTIFICATE=/home/kubernetes/etcdclient.crt
+export ETCD_KEY=/home/kubernetes/etcdclient.key
 
 # apiserver
 export GET_APISERVER_PPROF_BY_K8S_CLIENT=true

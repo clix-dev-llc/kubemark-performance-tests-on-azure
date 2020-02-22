@@ -133,7 +133,7 @@ source scripts/test-env.sh
 We need to copy certificate and key of ETCD to kubemark master. It will be used in the test.
 
 ```bash
-scp _output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt _output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key azureuser@${KUBEMARK_MASTER_IP}:~/
+scp _output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt _output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key kubernetes@${KUBEMARK_MASTER_IP}:~/
 ```
 
 Run the test suites:

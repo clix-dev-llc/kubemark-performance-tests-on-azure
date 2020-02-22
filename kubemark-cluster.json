@@ -28,7 +28,7 @@
             "vmSize": "Standard_DS2_v2"
         },
         "linuxProfile": {
-            "adminUsername": "azureuser",
+            "adminUsername": "kubernetes",
             "ssh": {
                 "publicKeys": [
                     {

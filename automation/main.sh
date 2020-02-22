@@ -8,23 +8,23 @@ ROOT_DIR="${WORKING_DIR}"/..
 
 source "${WORKING_DIR}"/common.sh
 
-function ssh_and_do(){
+function ssh_and_do {
     if [ -f "$2" ]; then
-        ssh -o StrictHostKeyChecking=no -i "${PRIVATE_KEY}" azureuser@"$1" < "$2"
+        ssh -o StrictHostKeyChecking=no -i "${PRIVATE_KEY}" kubernetes@"$1" < "$2"
     else
-        ssh -o StrictHostKeyChecking=no -i "${PRIVATE_KEY}" azureuser@"$1" "$2"
+        ssh -o StrictHostKeyChecking=no -i "${PRIVATE_KEY}" kubernetes@"$1" "$2"
     fi
 }
 
-function create_resource_group(){
+function create_resource_group {
     az group create -n "$1" -l "${LOCATION}" --tags "autostop=no"
 }
 
-function get_master_ip(){
+function get_master_ip {
     KUBEMARK_MASTER_IP=$(az network public-ip list -g "$1" | jq '.[0].ipAddress' | sed 's/"//g')
 }
 
-function build_kubemark_cluster(){
+function build_kubemark_cluster {
     aks-engine generate "$1"
 
     KUBEMARK_CLUSTER_DNS_PREFIX=$(jq '.properties.masterProfile.dnsPrefix' "$1" | sed 's/"//g')
@@ -37,10 +37,10 @@ function build_kubemark_cluster(){
     ssh_and_do "${KUBEMARK_MASTER_IP}" "${WORKING_DIR}/build-kubemark-master.sh"
 
     scp -i "${PRIVATE_KEY}" "${ROOT_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
-      "${ROOT_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key" azureuser@"${KUBEMARK_MASTER_IP}":~/
+      "${ROOT_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key" kubernetes@"${KUBEMARK_MASTER_IP}":~/
 }
 
-function build_external_cluster(){
+function build_external_cluster {
     aks-engine generate "$1"
 
     EXTERNAL_CLUSTER_DNS_PREFIX=$(jq '.properties.masterProfile.dnsPrefix' "$1" | sed 's/"//g')
@@ -65,12 +65,12 @@ create_resource_group "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" &
 create_resource_group "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" &
 wait
 
-build_kubemark_cluster "${ROOT_DIR}/kubemark-cluster.json"
-build_external_cluster "${ROOT_DIR}/external-cluster.json"
+build_kubemark_cluster "${ROOT_DIR}/kubemark-cluster-2.json"
+build_external_cluster "${ROOT_DIR}/external-cluster-1.json"
 
 export KUBECONFIG="${ROOT_DIR}/_output/${EXTERNAL_CLUSTER_DNS_PREFIX}/kubeconfig/kubeconfig.${LOCATION}.json"
 
-kubectl apply -f "${ROOT_DIR}/hollow-node.yaml"
+kubectl apply -f "${ROOT_DIR}/hollow-node-1.yaml"
 sleep 30
 
 export KUBECONFIG="${ROOT_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/kubeconfig/kubeconfig.${LOCATION}.json"
@@ -94,14 +94,14 @@ PROVIDER="kubemark"
 
 # SSH config for metrics' collection
 export KUBE_SSH_KEY_PATH="${PRIVATE_KEY}"
-export KUBE_SSH_USER="azureuser"
+export KUBE_SSH_USER="kubernetes"
 MASTER_SSH_IP="${KUBEMARK_MASTER_IP}"
 
 MASTER_NAME="$(kubectl get no | grep "k8s-master" | awk '{print $1}')"
 
 # etcd https params
-export ETCD_CERTIFICATE=/home/azureuser/etcdclient.crt
-export ETCD_KEY=/home/azureuser/etcdclient.key
+export ETCD_CERTIFICATE=/home/kubernetes/etcdclient.crt
+export ETCD_KEY=/home/kubernetes/etcdclient.key
 
 # apiserver
 export GET_APISERVER_PPROF_BY_K8S_CLIENT=true
@@ -121,18 +121,18 @@ LOG_FILE="${ROOT_DIR}/log"
 
 CLUSTERLOADER2="${ROOT_DIR}/bin/clusterloader"
 
-${CLUSTERLOADER2} \
-    --kubeconfig="${KUBE_CONFIG}" \
-    --kubemark-root-kubeconfig="${KUBE_CONFIG}" \
-    --provider="${PROVIDER}" \
-    --masterip="${MASTER_SSH_IP}" \
-    --master-internal-ip="10.240.255.5" \
-    --mastername="${MASTER_NAME}" \
-    --testconfig="${TEST_CONFIG}" \
-    --report-dir="${REPORT_DIR}" \
-    --alsologtostderr 2>&1 | tee "${LOG_FILE}"
+# ${CLUSTERLOADER2} \
+#     --kubeconfig="${KUBE_CONFIG}" \
+#     --kubemark-root-kubeconfig="${KUBE_CONFIG}" \
+#     --provider="${PROVIDER}" \
+#     --masterip="${MASTER_SSH_IP}" \
+#     --master-internal-ip="10.240.255.5" \
+#     --mastername="${MASTER_NAME}" \
+#     --testconfig="${TEST_CONFIG}" \
+#     --report-dir="${REPORT_DIR}" \
+#     --alsologtostderr 2>&1 | tee "${LOG_FILE}"
 
-# Clean up
-az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y &
-az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y &
+# # Clean up
+# az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y &
+# az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y &
 wait
