@@ -2,6 +2,7 @@
 
 set -e
 set -u
+set -x
 
 WORKING_DIR=$(dirname "${BASH_SOURCE[0]}")
 ROOT_DIR="${WORKING_DIR}"/..
@@ -19,6 +20,16 @@ function ssh_and_do {
 function create_resource_group {
     az group create -n "$1" -l "${LOCATION}" --tags "autostop=no"
 }
+
+function cleanup_resource_group {
+    echo "cleaning up resource groups..."
+
+    az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y &
+    az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y &
+    wait
+}
+
+trap cleanup_resource_group ERR EXIT
 
 function get_master_ip {
     KUBEMARK_MASTER_IP=$(az network public-ip list -g "$1" | jq '.[0].ipAddress' | sed 's/"//g')
@@ -57,8 +68,6 @@ function build_external_cluster {
       --namespace="kubemark" \
       --from-file="kubelet.kubeconfig=${ROOT_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/kubeconfig/kubeconfig.${LOCATION}.json" \
       --from-file="kubeproxy.kubeconfig=${ROOT_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/kubeconfig/kubeconfig.${LOCATION}.json"
-    
-
 }
 
 create_resource_group "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" &
@@ -121,18 +130,13 @@ LOG_FILE="${ROOT_DIR}/log"
 
 CLUSTERLOADER2="${ROOT_DIR}/bin/clusterloader"
 
-# ${CLUSTERLOADER2} \
-#     --kubeconfig="${KUBE_CONFIG}" \
-#     --kubemark-root-kubeconfig="${KUBE_CONFIG}" \
-#     --provider="${PROVIDER}" \
-#     --masterip="${MASTER_SSH_IP}" \
-#     --master-internal-ip="10.240.255.5" \
-#     --mastername="${MASTER_NAME}" \
-#     --testconfig="${TEST_CONFIG}" \
-#     --report-dir="${REPORT_DIR}" \
-#     --alsologtostderr 2>&1 | tee "${LOG_FILE}"
-
-# # Clean up
-# az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y &
-# az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y &
-wait
+${CLUSTERLOADER2} \
+    --kubeconfig="${KUBE_CONFIG}" \
+    --kubemark-root-kubeconfig="${KUBE_CONFIG}" \
+    --provider="${PROVIDER}" \
+    --masterip="${MASTER_SSH_IP}" \
+    --master-internal-ip="10.240.255.5" \
+    --mastername="${MASTER_NAME}" \
+    --testconfig="${TEST_CONFIG}" \
+    --report-dir="${REPORT_DIR}" \
+    --alsologtostderr 2>&1 | tee "${LOG_FILE}"

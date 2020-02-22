@@ -6,4 +6,4 @@ COPY . /kubemark-performance-tests-on-azure
 
 ENV PRIVATE_KEY id_rsa
 
-CMD ["bash", "automation/main.sh"]
+# CMD ["bash", "automation/main.sh"]
