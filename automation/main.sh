@@ -125,7 +125,7 @@ TEST_CONFIG="${TEST_CONFIG:-${ROOT_DIR}/testing/density/config.yaml}"
 # OVERRIDE_CONFIG='testing/density/override/200-nodes.yaml'
 
 # Log config
-REPORT_DIR="${ROOT_DIR}/reports"
+REPORT_DIR="${ROOT_DIR}/_artifacts"
 LOG_FILE="${ROOT_DIR}/log"
 
 CLUSTERLOADER2="${ROOT_DIR}/bin/clusterloader-$(uname -s)"
