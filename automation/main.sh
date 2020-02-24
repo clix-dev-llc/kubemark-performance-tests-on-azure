@@ -7,6 +7,47 @@ set -x
 WORKING_DIR=$(dirname "${BASH_SOURCE[0]}")
 ROOT_DIR="${WORKING_DIR}"/..
 
+while [ -n "${1-}" ]  
+do  
+  case "$1" in   
+    --kubemark-rg)  
+        if [ -n "$2" ]; then
+            KUBEMARK_CLUSTER_RESOURCE_GROUP="$2"
+            shift
+        fi
+        ;;
+    --external-rg)  
+        if [ -n "$2" ]; then
+            EXTERNAL_CLUSTER_RESOURCE_GROUP="$2"
+            shift
+        fi
+        ;;
+    --location)  
+        if [ -n "$2" ]; then
+            LOCATION="$2"
+            shift
+        fi
+        ;;
+    --private-key)  
+        if [ -n "$2" ]; then
+            PRIVATE_KEY="$2"
+            shift
+        fi
+        ;;
+    --kubemark-size)
+        if [ -n "$2" ]; then
+            KUBEMARK_SIZE="$2"
+            shift
+        fi
+        ;;
+    *)  
+        echo "$1 is not a supported option"
+        exit 99
+        ;;  
+  esac  
+  shift  
+done
+
 source "${WORKING_DIR}"/common.sh
 
 function ssh_and_do {

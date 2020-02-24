@@ -6,4 +6,4 @@ COPY . /kubemark-performance-tests-on-azure
 
 ENV PRIVATE_KEY id_rsa
 
-CMD ["bash", "automation/runner.sh"]
+ENTRYPOINT ["bash", "automation/runner.sh"]
