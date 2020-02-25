@@ -1,4 +1,4 @@
-FROM ss104301/dev-env:latest
+FROM dev-env:latest
 
 WORKDIR /kubemark-performance-tests-on-azure
 
