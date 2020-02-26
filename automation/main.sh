@@ -65,9 +65,8 @@ function create_resource_group {
 function cleanup_resource_group {
     echo "cleaning up resource groups..."
 
-    az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y &
-    az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y &
-    wait
+    az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y --no-wait
+    az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y --no-wait
 }
 
 trap cleanup_resource_group ERR EXIT
