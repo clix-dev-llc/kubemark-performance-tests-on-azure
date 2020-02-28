@@ -19,4 +19,3 @@ kubectl -n kube-system get po | grep "kube-controller-manager" | awk '{print $1}
 KUBEMARK_MASTER_NAME=$(kubectl get no | grep "master" | awk '{print $1}')
 kubectl taint node "${KUBEMARK_MASTER_NAME}" node-role.kubernetes.io/master=:NoSchedule
 
-logout
