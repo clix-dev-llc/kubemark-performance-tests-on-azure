@@ -81,6 +81,8 @@ echo "generating ssh key pair"
 ssh-keygen -t rsa -n '' -f "${WORKING_DIR}"/id_rsa -P "" > /dev/null
 PRIVATE_KEY="${PRIVATE_KEY:-${WORKING_DIR}/id_rsa}"
 PUBLIC_KEY="${PUBLIC_KEY:-${WORKING_DIR}/id_rsa.pub}"
+echo "ssh public key:"
+cat "${PUBLIC_KEY}"
 
 # install azure cli
 echo "installing azure cli"
@@ -94,14 +96,6 @@ TenantID=$(grep "TenantID" "${AZURE_CREDENTIALS}" | awk -F ' = ' '{print $2}' | 
 
 echo "logging in to azure"
 az login --service-principal --username "${ClientID}" --password "${ClientSecret}" --tenant "${TenantID}" > /dev/null
-
-function ssh_and_do {
-    if [ -f "$2" ]; then
-        ssh -p 54322 -o 'ConnectionAttempts 10' -i "${PRIVATE_KEY}" kubernetes@"$1" < "$2"
-    else
-        ssh -p 54322 -o 'ConnectionAttempts 10' -i "${PRIVATE_KEY}" kubernetes@"$1" "$2"
-    fi
-}
 
 function create_resource_group {
     az group create -n "$1" -l "${LOCATION}" --tags "autostop=no"
@@ -125,7 +119,7 @@ function get_master_ip {
 
 function build_kubemark_cluster {
     echo "generating kubemark cluster manifests to ${WORKING_DIR}"
-    aks-engine generate "$1"
+    "${AKS_ENGINE}" generate "$1"
 
     echo "deploying kubemark cluster"
     KUBEMARK_CLUSTER_DNS_PREFIX=$(jq -r '.properties.masterProfile.dnsPrefix' "$1")
@@ -138,22 +132,14 @@ function build_kubemark_cluster {
 
     get_master_ip "${KUBEMARK_CLUSTER_RESOURCE_GROUP}"
 
-    echo "configuring ssh port forwarding"
-    curl -o port-forwarding.sh https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/port-forwarding.sh
-    chmod +x port-forwarding.sh
-    MASTER_VM_NAME=$(az vm list -g "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" --query '[0].name' -o tsv)
-    "${WORKING_DIR}"/port-forwarding.sh "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" "${MASTER_VM_NAME}" 54322
-
-    echo "building kubemark master" 
-    ssh_and_do "${KUBEMARK_MASTER_IP}" "${WORKING_DIR}/build-kubemark-master.sh"
-
-    scp -i "${PRIVATE_KEY}" "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
+    echo "copying etcd key"
+    scp  -o 'StrictHostKeyChecking=no' -o 'ConnectionAttempts=10' -i "${PRIVATE_KEY}" "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
       "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key" kubernetes@"${KUBEMARK_MASTER_IP}":~/
 }
 
 function build_external_cluster {
     echo "generating external cluster manifests to ${WORKING_DIR}"
-    aks-engine generate "$1"
+    "${AKS_ENGINE}" generate "$1"
 
     echo "deploying external cluster"
     EXTERNAL_CLUSTER_DNS_PREFIX=$(jq -r '.properties.masterProfile.dnsPrefix' "$1")
@@ -205,7 +191,11 @@ echo "getting aks-engine"
 curl -o get-akse.sh https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/get-akse.sh
 chmod 700 get-akse.sh
 ./get-akse.sh
-aks-engine version
+# curl -o "${WORKING_DIR}"/aks-engine https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/aks-engine-bin/aks-engine 
+# chmod +x "${WORKING_DIR}"/aks-engine 
+# AKS_ENGINE="${WORKING_DIR}"/aks-engine
+AKS_ENGINE="aks-engine"
+"${AKS_ENGINE}" version
 
 build_kubemark_cluster "${WORKING_DIR}/kubemark-cluster.json"
 build_external_cluster "${WORKING_DIR}/external-cluster.json"
@@ -219,15 +209,22 @@ sleep 30
 export KUBECONFIG="${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/kubeconfig/kubeconfig.${LOCATION}.json"
 
 echo "waiting ${KUBEMARK_SIZE} hollow nodes to be ready"
+total_retry=0
 while : 
 do
+    total_retry+=1
     none_count=$(kubectl get no | awk '{print $3}' | grep "<none>" | wc -l)
     node_count=$(kubectl get no | grep "hollow" | wc -l)
     if [ "${node_count}" -eq "${KUBEMARK_SIZE}" ] && [ "${none_count}" -eq 0  ]; then
         break
     else 
-        echo "there're ${node_count} ready hollow nodes, will retry after 10 seconds"
+        echo "there're ${node_count} ready hollow nodes, "${none_count}" <none> nodes, will retry after 10 seconds"
         sleep 10
+    fi
+
+    if [ "${total_retry}" -eq 100 ]; then
+        echo "maximum retry times reached"
+        exit 100
     fi
 done
 
@@ -266,9 +263,15 @@ TEST_CONFIG="${TEST_CONFIG:-${WORKING_DIR}/configs/density/config.yaml}"
 # Log config
 REPORT_DIR="/logs/artifacts"
 LOG_FILE="/logs/artifacts/cl2-test.log"
+if [ ! -d "${REPORT_DIR}" ]; then
+    mkdir -p "${REPORT_DIR}"
+    touch "${LOG_FILE}"
+    echo "report directory created"
+fi
 
 curl -o clusterloader2 "${CLUSTERLOADER2_BIN_URL}"
 CLUSTERLOADER2="${WORKING_DIR}/clusterloader2"
+chmod +x "${CLUSTERLOADER2}"
 
 echo "testing ${TEST_CONFIG} by clusterloader2"
 ${CLUSTERLOADER2} \

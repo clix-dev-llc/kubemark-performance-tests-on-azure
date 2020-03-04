@@ -20,6 +20,3 @@ kubectl -n kube-system get po | grep "kube-controller-manager" | awk '{print $1}
 
 KUBEMARK_MASTER_NAME=$(kubectl get no | grep "master" | awk '{print $1}')
 kubectl taint node "${KUBEMARK_MASTER_NAME}" node-role.kubernetes.io/master=:NoSchedule
-
-sudo sed -i "s/^Port 22$/Port 22\nPort 54322/1" /etc/ssh/sshd_config
-sudo /etc/init.d/ssh restart

@@ -24,22 +24,35 @@
         },
         "masterProfile": {
             "count": 1,
-            "dnsPrefix": "{DNS_PREFIX}",
-            "vmSize": "Standard_DS2_v2"
+            "dnsPrefix": "{{DNS_PREFIX}}",
+            "vmSize": "Standard_DS2_v2",
+            "extensions": [
+                {
+                    "name": "config-kubemark-master"
+                }
+            ]
         },
+        "extensionProfiles": [
+            {
+                "name": "config-kubemark-master",
+                "version": "v1",
+                "extensionParameters": "parameters",
+                "rootURL": "https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/"
+            }
+        ],
         "linuxProfile": {
             "adminUsername": "kubernetes",
             "ssh": {
                 "publicKeys": [
                     {
-                        "keyData": "{SSH_PUBLIC_KEY}"
+                        "keyData": "{{SSH_PUBLIC_KEY}}"
                     }
                 ]
             }
         },
         "servicePrincipalProfile": {
-            "clientID": "{AZURE_CLIENT_ID}",
-            "secret": "{AZURE_CLIENT_SECRET}"
+            "clientID": "{{AZURE_CLIENT_ID}}",
+            "secret": "{{AZURE_CLIENT_SECRET}}"
         }
     }
 }
