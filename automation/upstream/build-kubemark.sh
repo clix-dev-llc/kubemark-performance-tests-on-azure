@@ -81,8 +81,6 @@ echo "generating ssh key pair"
 ssh-keygen -t rsa -n '' -f "${WORKING_DIR}"/id_rsa -P "" > /dev/null
 PRIVATE_KEY="${PRIVATE_KEY:-${WORKING_DIR}/id_rsa}"
 PUBLIC_KEY="${PUBLIC_KEY:-${WORKING_DIR}/id_rsa.pub}"
-echo "ssh public key:"
-cat "${PUBLIC_KEY}"
 
 # install azure cli
 echo "installing azure cli"
@@ -128,12 +126,12 @@ function build_kubemark_cluster {
       --template-file "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/azuredeploy.json" \
       --parameters "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/azuredeploy.parameters.json" > /dev/null
 
-    curl -o "${WORKING_DIR}/build-kubemark-master.sh" "https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/build-kubemark-master.sh"
+    # curl -o "${WORKING_DIR}/build-kubemark-master.sh" "https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/build-kubemark-master.sh"
 
     get_master_ip "${KUBEMARK_CLUSTER_RESOURCE_GROUP}"
 
     echo "copying etcd key"
-    scp  -o 'StrictHostKeyChecking=no' -o 'ConnectionAttempts=10' -i "${PRIVATE_KEY}" "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
+    scp  -P 54322 -o 'StrictHostKeyChecking=no' -o 'ConnectionAttempts=10' -i "${PRIVATE_KEY}" "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
       "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key" kubernetes@"${KUBEMARK_MASTER_IP}":~/
 }
 
@@ -188,12 +186,12 @@ sed -i "s/{{kubemark_image_registry}}/ss104301/g" "${WORKING_DIR}/hollow-node.ya
 sed -i "s/{{kubemark_image_tag}}/latest/g" "${WORKING_DIR}/hollow-node.yaml"
 
 echo "getting aks-engine"
-curl -o get-akse.sh https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/get-akse.sh
-chmod 700 get-akse.sh
-./get-akse.sh
-# curl -o "${WORKING_DIR}"/aks-engine https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/aks-engine-bin/aks-engine 
-# chmod +x "${WORKING_DIR}"/aks-engine 
-# AKS_ENGINE="${WORKING_DIR}"/aks-engine
+# curl -o get-akse.sh https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/get-akse.sh
+# chmod 700 get-akse.sh
+# ./get-akse.sh
+curl -o "${WORKING_DIR}"/aks-engine https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/aks-engine-bin/aks-engine 
+chmod +x "${WORKING_DIR}"/aks-engine 
+AKS_ENGINE="${WORKING_DIR}"/aks-engine
 AKS_ENGINE="aks-engine"
 "${AKS_ENGINE}" version
 
@@ -212,13 +210,13 @@ echo "waiting ${KUBEMARK_SIZE} hollow nodes to be ready"
 total_retry=0
 while : 
 do
-    total_retry+=1
-    none_count=$(kubectl get no | awk '{print $3}' | grep "<none>" | wc -l)
-    node_count=$(kubectl get no | grep "hollow" | wc -l)
-    if [ "${node_count}" -eq "${KUBEMARK_SIZE}" ] && [ "${none_count}" -eq 0  ]; then
+    total_retry=$(( $total_retry + 1 ))
+    none_count=$(kubectl get no | awk '{print $3}' | grep -c "<none>")
+    node_count=$(kubectl get no | grep -c "hollow" | awk '{print $2}' | grep -c "^Ready$")
+    if [ "${node_count}" -eq "${KUBEMARK_SIZE}" ] && [ "${none_count}" -eq 0 ]; then
         break
     else 
-        echo "there're ${node_count} ready hollow nodes, "${none_count}" <none> nodes, will retry after 10 seconds"
+        echo "there're ${node_count} ready hollow nodes, ${none_count} <none> nodes, will retry after 10 seconds"
         sleep 10
     fi
 
@@ -227,6 +225,8 @@ do
         exit 100
     fi
 done
+
+echo "all hollow nodes are ready, starting test with clusterloader2"
 
 export KUBE_CONFIG="${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/kubeconfig/kubeconfig.${LOCATION}.json"
 

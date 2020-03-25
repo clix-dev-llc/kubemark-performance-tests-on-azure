@@ -30,7 +30,8 @@
                 {
                     "name": "config-kubemark-master"
                 }
-            ]
+            ],
+            "sshAlternativePort": "54322"
         },
         "extensionProfiles": [
             {
