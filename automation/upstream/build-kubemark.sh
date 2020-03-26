@@ -84,8 +84,10 @@ PRIVATE_KEY="${PRIVATE_KEY:-${WORKING_DIR}/id_rsa}"
 PUBLIC_KEY="${PUBLIC_KEY:-${WORKING_DIR}/id_rsa.pub}"
 
 # install azure cli
-echo "installing azure cli"
-curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+if ! command -v az > /dev/null; then
+    echo "installing azure cli"
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+fi
 
 # read azure credentials
 # echo "reading azure credentials"
