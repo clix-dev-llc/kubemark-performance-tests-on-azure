@@ -136,7 +136,7 @@ function build_kubemark_cluster {
     get_master_ip "${KUBEMARK_CLUSTER_RESOURCE_GROUP}"
 
     echo "copying etcd key"
-    scp  -P 54322 -o 'StrictHostKeyChecking=no' -o 'ConnectionAttempts=10' -i "${PRIVATE_KEY}" "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
+    scp -o 'StrictHostKeyChecking=no' -o 'ConnectionAttempts=10' -i "${PRIVATE_KEY}" "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.crt" \
       "${WORKING_DIR}/_output/${KUBEMARK_CLUSTER_DNS_PREFIX}/etcdclient.key" kubernetes@"${KUBEMARK_MASTER_IP}":~/
 }
 
@@ -190,14 +190,15 @@ sed -i "s/{{numreplicas}}/$KUBEMARK_SIZE/" "${WORKING_DIR}/hollow-node.yaml"
 sed -i "s/{{kubemark_image_registry}}/ss104301/g" "${WORKING_DIR}/hollow-node.yaml"
 sed -i "s/{{kubemark_image_tag}}/latest/g" "${WORKING_DIR}/hollow-node.yaml"
 
-echo "getting aks-engine"
-# curl -o get-akse.sh https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/get-akse.sh
-# chmod 700 get-akse.sh
-# ./get-akse.sh
-curl -o "${WORKING_DIR}"/aks-engine https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/aks-engine-bin/aks-engine 
-chmod +x "${WORKING_DIR}"/aks-engine 
+if ! command -v aks-engine > /dev/null; then
+    echo "getting aks-engine"
+    curl -o get-akse.sh https://raw.githubusercontent.com/Azure/aks-engine/master/scripts/get-akse.sh
+    chmod 700 get-akse.sh
+    ./get-akse.sh
+fi
+# curl -o "${WORKING_DIR}"/aks-engine https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/aks-engine-bin/aks-engine 
+# chmod +x "${WORKING_DIR}"/aks-engine 
 AKS_ENGINE="${WORKING_DIR}"/aks-engine
-AKS_ENGINE="aks-engine"
 "${AKS_ENGINE}" version
 
 build_kubemark_cluster "${WORKING_DIR}/kubemark-cluster.json"
