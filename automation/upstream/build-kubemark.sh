@@ -198,7 +198,8 @@ if ! command -v aks-engine > /dev/null; then
 fi
 # curl -o "${WORKING_DIR}"/aks-engine https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/automation/upstream/aks-engine-bin/aks-engine 
 # chmod +x "${WORKING_DIR}"/aks-engine 
-AKS_ENGINE="${WORKING_DIR}"/aks-engine
+# AKS_ENGINE="${WORKING_DIR}"/aks-engine
+AKS_ENGINE=aks-engine
 "${AKS_ENGINE}" version
 
 build_kubemark_cluster "${WORKING_DIR}/kubemark-cluster.json"
