@@ -218,8 +218,8 @@ total_retry=0
 while : 
 do
     total_retry=$(( $total_retry + 1 ))
-    none_count=$(kubectl get no | awk '{print $3}' | grep -c "<none>")
-    node_count=$(kubectl get no | grep -c "hollow" | awk '{print $2}' | grep -c "^Ready$")
+    none_count=$(kubectl get no | awk '{print $3}' | grep -c "<none>" || true)
+    node_count=$(kubectl get no | grep "hollow" | awk '{print $2}' | grep -c "^Ready$" || true)
     if [ "${node_count}" -eq "${KUBEMARK_SIZE}" ] && [ "${none_count}" -eq 0 ]; then
         break
     else 
