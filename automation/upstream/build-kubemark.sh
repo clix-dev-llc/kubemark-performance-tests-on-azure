@@ -111,8 +111,6 @@ function cleanup {
 
     az group delete -n "${KUBEMARK_CLUSTER_RESOURCE_GROUP}" -y --no-wait
     az group delete -n "${EXTERNAL_CLUSTER_RESOURCE_GROUP}" -y --no-wait
-
-    az logout
 }
 
 trap cleanup ERR EXIT
