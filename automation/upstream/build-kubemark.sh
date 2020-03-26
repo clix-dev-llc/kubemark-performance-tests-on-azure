@@ -2,6 +2,7 @@
 
 set -e
 set -u
+set -x
 
 WORKING_DIR=$(dirname "${BASH_SOURCE[0]}")
 
