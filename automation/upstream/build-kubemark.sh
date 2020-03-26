@@ -276,7 +276,7 @@ if [ ! -d "${REPORT_DIR}" ]; then
     echo "report directory created"
 fi
 
-curl -o clusterloader2 "${CLUSTERLOADER2_BIN_URL}"
+curl -L "${CLUSTERLOADER2_BIN_URL}" -o clusterloader2
 CLUSTERLOADER2="${WORKING_DIR}/clusterloader2"
 chmod +x "${CLUSTERLOADER2}"
 
