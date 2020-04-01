@@ -46,7 +46,7 @@
     },
     "variables": {  
          "singleQuote": "'",
-         "initScriptUrl": "[concat(parameters('artifactsLocation'), 'https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/extensions/config-sshd/v1/config-sshd.sh')]"
+         "initScriptUrl": "https://raw.githubusercontent.com/nilo19/kubemark-performance-tests-on-azure/master/extensions/config-sshd/v1/config-sshd.sh"
     },
     "resources": [  
      {
